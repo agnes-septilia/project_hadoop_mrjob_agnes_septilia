@@ -1,0 +1,104 @@
+HOMEWORK STEP BY STEP
+
+*** CREATE DOCKER POSTGRES ***
+    
+    $ docker pull postgress
+
+    $ docker run --name postgres -p 5430:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=1234 -e POSTGRES_DB=project4 -d postgres
+
+
+*** CREATE DOCKER HADOOP ***
+
+    # follow instruction on https://phoenixnap.com/kb/install-hadoop-ubuntu
+
+
+*** CHECK STATUS OF DOCKER IMAGES ***
+
+    $ docker images
+
+    REPOSITORY                       TAG                       IMAGE ID       CREATED        SIZE
+    postgres                         latest                    027eba2e8939   3 days ago     377MB
+    ubuntu                           latest                    cdb68b455a14   4 days ago     77.8MB
+    docker/getting-started           latest                    cb90f98fd791   6 months ago   28.8MB
+    bde2020/hadoop-nodemanager       2.0.0-hadoop3.2.1-java8   4e47dabd148f   2 years ago    1.37GB
+    bde2020/hadoop-resourcemanager   2.0.0-hadoop3.2.1-java8   3deba4a1885f   2 years ago    1.37GB
+    bde2020/hadoop-namenode          2.0.0-hadoop3.2.1-java8   839ec11d95f8   2 years ago    1.37GB
+    bde2020/hadoop-historyserver     2.0.0-hadoop3.2.1-java8   173c52d1f624   2 years ago    1.37GB
+    bde2020/hadoop-datanode          2.0.0-hadoop3.2.1-java8   df288ee0a7f9   2 years ago    1.37GB
+
+
+*** CHECK STATUS OF DOCKER CONTAINERS ***
+
+    $ docker ps 
+
+
+    CONTAINER ID   IMAGE                                                    COMMAND                  CREATED          STATUS                         PORTS                                                                                  NAMES
+    6520f7afa012   postgres                                                 "docker-entrypoint.s…"   45 seconds ago   Up 34 seconds                  0.0.0.0:5430->5432/tcp, :::5430->5432/tcp                                              postgres
+    dcafe6478e68   bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8   "/entrypoint.sh /run…"   32 hours ago     Up About an hour (unhealthy)   8088/tcp                                                                               resourcemanager
+    9db2f542d96b   bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8          "/entrypoint.sh /run…"   32 hours ago     Up About an hour (unhealthy)   9864/tcp                                                                               datanode
+    aa96f9b0c62a   bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8          "/entrypoint.sh /run…"   32 hours ago     Up About an hour (healthy)     0.0.0.0:9000->9000/tcp, :::9000->9000/tcp, 0.0.0.0:9870->9870/tcp, :::9870->9870/tcp   namenode
+    8378fa0e36d1   bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8       "/entrypoint.sh /run…"   32 hours ago     Up About an hour (unhealthy)   8042/tcp                                                                               nodemanager
+    d21738eda7d0   bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8     "/entrypoint.sh /run…"   32 hours ago     Up About an hour (unhealthy)   8188/tcp                                                                               historyserver
+
+
+*** ACTIVATE HADOOP ***
+
+    $ start-all.sh
+
+    to check the file uploaded in hdfs, open in browser  -->  http://localhost:9870/  -->  Utilities  -->  Browse the file system
+
+
+*** CREATE PYTHON ENVIRONMENT ***
+
+    conda create -n project4 python=3.10
+
+    conda activate project4
+
+
+*** INGEST DATA FROM CSV TO POSTGRES ***
+
+    to create --> touch csv_to_postgres.py
+    to execute --> python3 csv_to_postgres.py
+
+
+*** CREATE EMPTY TABLE IN POSTGRES FOR ACCOMODATE THE DATA ***/
+
+    script_empty_tables.sql
+
+
+*** DO MRJOB TASKS --> THEN UPLOAD RESULT TO POSTGRES ***
+    
+    ** Task 1 **
+        
+        to create --> touch product.py
+        to execute --> python3 product.py dataset_project_4/TR_Products.csv
+ 
+    ** Task 2 **
+
+        to create --> touch total_order_yearly.py
+        to execute --> python3 total_order_yearly.py dataset_project_4/TR_OrderDetails.csv
+
+    ** Task 3 **
+
+        to create --> touch total_order_product_yearly.py
+        to execute --> python3 total_order_product_yearly.py dataset_project_4/TR_OrderDetails.csv
+
+
+*** UPLOAD FILES TO HADOOP 
+    
+    For each tasks python files, change the host from `localhost` to `host.docker.internal`, and add _hadoop in the end of the file name    
+
+    upload to docker namenode 
+    docker cp <file_name> namenode:./<file_name>    
+        
+    enter docker namenode --> $ docker exec -it namenode bash
+    
+    make new folder -->  $ hadoop dfs -mkdir /project_4_agnes_septilia
+
+    upload files to hadoop:
+        hdfs dfs -put <file_name> /project_4_agnes_septilia/<file_name>
+
+
+*** QUIT FROM PYTHON ENVIRONMENT ***
+    
+    conda deactivate
